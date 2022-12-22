@@ -1,2 +1,2 @@
 # CyberLevel
-A gyro assisted digital level for Steadicam
+ A gyro assisted digital level for Steadicam
