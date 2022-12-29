@@ -1,28 +1,27 @@
 #include <EasyButton.h>
 #include <Wire.h>
 #include <Adafruit_NeoPixel.h>
-#include <NexgenAHRS.h>
+#include <ReefwingAHRS.h>
+// #include <NexgenAHRS.h>
 
 
-/* IMU */
+/* === === === === === IMU === === === === === */
 
 LSM9DS1 imu;
 EulerAngles angles;
 
-int loopFrequency = 0;
-const long displayPeriod = 0;
-unsigned long previousMillis = 0;
+// int loopFrequency = 0;
+// const long displayPeriod = 0;
+// unsigned long previousMillis = 0;
 
-/* Pixel + buttons */
+/* === === === === === pixel / buttons / pot === === === === ===*/
 
-// Assigning pins
-#define LED_PIN D2     // NeoPixel strip
 #define BUTTON_PIN D3  // Button switch
 #define POT_PIN A7     // Potentiometer
-// RGB LED
-int led1 = LEDR;
-int led2 = LEDG;
-int led3 = LEDB;
+
+/* === === === === === RGB LED === === === === === */
+
+#define LED_PIN D2  // NeoPixel strip
 
 // How many NeoPixels are attached to the Arduino?
 #define NUM_PIXELS 20
@@ -42,9 +41,11 @@ int led3 = LEDB;
 // strandtest example for more information on possible values.
 Adafruit_NeoPixel pixels(NUM_PIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
 
+/* === === === === === VALUES === === === === === */
+
 /* constant values */
 const uint8_t centerPixel = (NUM_PIXELS - 1) / 2;  // Center of the LED strip
-const int numReadings = 10;
+const int numReadings = 15;
 
 /* variable values */
 double angle;        // Roll angle in degree
@@ -56,12 +57,12 @@ float angleOffset;   // offset from potentiometer
 int8_t intPixel;     // pixel number without decimal
 uint8_t zoom = 20;   // zoom factor of the bubble
 uint8_t axis = 1;    // axis displayed
-  // pot smoothing
+// pot smoothing
 float readings[numReadings];  // the readings from the analog input
 int readIndex = 0;            // the index of the current reading
 float total = 0;              // the running total
 float Pot = 0;                // the pot average
-
+// Led colors
 uint32_t bgcolor;     // background color
 uint32_t rgbcolor0;   // leading pixel color
 uint32_t rgbcolor1;   // main pixel color
@@ -74,7 +75,7 @@ uint32_t rgbcolorC;   // background of center pixels
 uint32_t rgbcolorC0;  // leading pixel when centered
 uint32_t rgbcolorC1;  // main pixel when centered
 uint32_t rgbcolorC2;  // trailing pixel when centered
-
+// button
 uint8_t debounce = 40;
 bool pullup = true;
 bool invert = true;
@@ -82,8 +83,8 @@ EasyButton button(BUTTON_PIN, debounce, pullup, invert);
 
 void (*resetFunc)(void) = 0;  // create a standard reset function
 
-/* ---------------------------------------------------------------------------------------------------- */
-
+/*=== === === === === === === === === === === === === === === === === === === === === === === === ===
+=== === === === === === === === === === === === === === === === === === === === === === === === === */
 
 /* _________ BUTTON ACTIONS _________ */
 
@@ -181,17 +182,20 @@ void changeAxis() {
 */
 void setup() {
 
-  /* initializing EasyButton */
+  // initialize EasyButton
   button.begin();
-  // Initialise the LSM9DS1 IMU
+  // Initialize the LSM9DS1 IMU
   imu.begin();
-  /* INITIALIZE NeoPixel strip object (REQUIRED) */
+  // Initialize NeoPixel strip
   pixels.begin();
-  /* Set RGB LED pins as OUTPUT)*/
-  pinMode(led1, OUTPUT);
-  pinMode(led2, OUTPUT);
-  pinMode(led3, OUTPUT);
-
+  // Set RGB LED pins
+  pinMode(LEDR, OUTPUT);
+  pinMode(LEDG, OUTPUT);
+  pinMode(LEDB, OUTPUT);
+  // Turn RGB LEDs on
+  digitalWrite(LEDR, LOW);
+  digitalWrite(LEDG, LOW);
+  digitalWrite(LEDB, LOW);
 
   //dim white center pixel
   pixels.clear();
@@ -208,8 +212,10 @@ void setup() {
 
   //  Start Serial and wait for connection
   Serial.begin(115200);
-  // while (!Serial)
-  //   ;
+  while (!Serial)
+    ;
+
+  Serial.print(" === === === Seial started === === === ");
 
   if (imu.connected()) {
     Serial.println("LSM9DS1 IMU Connected.");
@@ -230,15 +236,10 @@ void setup() {
     while (1)
       ;
   }
+
   // /* EasyButton callbacks*/
   button.onSequence(1, 300, changeZoom);
   button.onPressedFor(300, changeAxis);
-
-  digitalWrite(led1, LOW);
-  digitalWrite(led2, LOW);
-  digitalWrite(led3, LOW);
-
-  // button.onPressed(onPressed);
 }
 
 /* 
@@ -247,32 +248,38 @@ void setup() {
 === === === === === === === === === === === === === === === === === === === === === === === === === === === === === ===
 */
 void loop() {
-  button.read();
+  // Check serial input
+  //   char Serial.input();
+  // if (Serial.input())  {
+  //   if (char == "i") {
 
-  //  Check for new IMU data and update angles
-  angles = imu.update();
-
-  //  Wait for new sample - 7 ms delay provides a 100Hz sample rate / loop frequency
-  delay(7);
-
-  /* ---------- above from Nexgen, below from cyberlevel ---------- */
-  angle = angles.pitch;
-
-  // if (angle >= 0) {
-  //   // Serial.print("CLICK!");
-  //   digitalWrite(led1, LOW);
-  //   digitalWrite(led2, LOW);
-  //   digitalWrite(led3, LOW);
-
-  // } else {
-  //   digitalWrite(led1, HIGH);
-  //   digitalWrite(led2, HIGH);
-  //   digitalWrite(led3, HIGH);
+  //   }
   // }
 
-  digitalWrite(led1, HIGH);
-  digitalWrite(led2, HIGH);
-  digitalWrite(led3, HIGH);
+  // Turn RGB LEDs off
+
+  if (imu.Initialising()) {
+    digitalWrite(LEDR, LOW);
+    digitalWrite(LEDG, HIGH);
+    digitalWrite(LEDB, HIGH);
+  } else {
+    digitalWrite(LEDR, HIGH);
+    digitalWrite(LEDG, HIGH);
+    digitalWrite(LEDB, HIGH);
+  }
+
+  // Check button status
+  button.read();
+
+  // Check for new IMU data and update angles
+  angles = imu.update();
+
+  // Wait for new sample - 7 ms delay provides a 100Hz sample rate / loop frequency
+  delay(7);
+
+  /* ---------- above from Reefwing, below from cyberlevel ---------- */
+  angle = angles.pitch;
+
   /* Offset the angle with the potentiometer */
   //float Pot = analogRead(POT_PIN);            // 0 to 1023
   /* smoothing the pot input*/
@@ -293,7 +300,7 @@ void loop() {
   // calculate the average:
   Pot = total / numReadings;
   // send it to the computer as ASCII digits
-  Serial.print(" -- Pot : ");
+  Serial.print(" -- Pot: ");
   Serial.println(Pot);
 
   angleOffset = (Pot / (1023 / 2) * 10) - 10;  // offset bubble with pot
@@ -377,7 +384,11 @@ void loop() {
     pixels.setPixelColor(centerPixel, rgbcolorC);
     pixels.setPixelColor(centerPixel + 1, rgbcolorS);
   }
+
   pixels.show();  // displays the pixels
+
+  Serial.print("Angles: ");
+  Serial.print(angles.pitch);
 
   // Serial.print(F("Euler: "));
   // Serial.print((quat.toEuler().y()) * (180 / PI));
