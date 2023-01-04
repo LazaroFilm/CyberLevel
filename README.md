@@ -18,3 +18,4 @@ This uses the Arduino Nano 33 ble as MCU/IMU. The benefits are a single board is
 Found a great repo called [Nextgen_AHRS](https://bitbucket.org/David_Such/nexgen_ahrs/src/main/) that already implements sensor fusion on the Nano 33 ble, the code works and I was able to implement it into the CyberLevel. Using the ```Fusion``` mode gives the best results, however it still doesnt behave as well as the BNO055, especially when "knocked", it takes too long for the bubble to re-center itself.
 
 I'm looking into completely refactoring the Nextgen implementation to use a [newer Fusion algorithm](https://github.com/xioTechnologies/Fusion) that includes rejection of gyro data during fast moves. I believe this is the missing part to the algo to match the performance of the BNO055.
+I'm also planning on using FemmeVerbeek's [IMU library](https://github.com/FemmeVerbeek/Arduino_LSM9DS1) library to benefit from the better calibration and exposed controls.
