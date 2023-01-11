@@ -1,0 +1,4 @@
+{
+    "sketch": "CyberLevel_Reefwing_Nano33.ino",
+    "board": "arduino:mbed_nano:nano33ble"
+}
