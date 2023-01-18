@@ -1,6 +1,0 @@
-{
-    "board": "arduino:avr:leonardo",
-    "sketch": "rawdata/rawdata/rawdata.ino",
-    "port": "/dev/tty.usbmodem401201",
-    "programmer": "arduino:arduinoisp"
-}
