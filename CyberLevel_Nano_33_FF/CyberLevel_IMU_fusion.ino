@@ -9,24 +9,16 @@ void setupIMU() {
   /*******************    For an improved accuracy run the DIY_Calibration_Accelerometer sketch first.     ****************
 ********************         Copy/Replace the lines below by the code output of the program              ****************/
   // Accelerometer code
-  //  Number of calibration samples 2000
-  //  Full Scale setting 2 = 4g
-  //  Output Data Rate (ODR) setting 4 = 242Hz (actual value)
-  IMU.setAccelFS(2);
-  IMU.setAccelODR(3);
-  IMU.setAccelOffset(0.002186, 0.010529, 0.017599);
-  IMU.setAccelSlope(0.995454, 1.006846, 0.999106);
-
+  IMU.setAccelFS(2);   // 4g
+  IMU.setAccelODR(5);  // 480Hz (actual value)
+  IMU.setAccelOffset(0.002574, -0.031235, 0.008305);
+  IMU.setAccelSlope(0.995279, 1.006595, 0.999351);
 
   // Gyroscope code
-  // Full Scale setting 3 = 2000°/s
-  // Output Data Rate (ODR) setting 4 = 243Hz (actual value)
-  // Number of calibration samples 2000
-  // Calibrate Offset (keep board still during measurement)
-  IMU.setGyroFS(3);
-  IMU.setGyroODR(3);
-  IMU.setGyroOffset(2.099704, 0.203151, -0.2691);
-  IMU.setGyroSlope(1.296983, 1.206265, 1.185898);
+  IMU.setGyroFS(3);   // 2000°/s
+  IMU.setGyroODR(5);  // 476Hz (actual value)
+  IMU.setGyroOffset(1.499939, -0.663391, 0.311584);
+  IMU.setGyroSlope(1.193301, 1.157363, 1.201664);
 
   IMU.setMagnetFS(0);
   IMU.setMagnetODR(8);
@@ -158,45 +150,45 @@ void loopFusion() {
   const FusionEuler euler = FusionQuaternionToEuler(FusionAhrsGetQuaternion(&ahrs));
   // const FusionVector earth = FusionAhrsGetEarthAcceleration(&ahrs);
 
-  angle = euler.angle.roll;
+  angle = euler.angle.pitch;
 
-  int time = millis();
-  // Accellerometer / Gyroscope message to x-IMU3 software
-  // I,1000000,0.0000,0.0000,0.0000,0.0000,0.0000,1.0000\r\n
-  Serial.print("I,");
-  Serial.print(time);
-  Serial.print("00,");
-  Serial.print(gx, 4);
-  Serial.print(",");
-  Serial.print(gy, 4);
-  Serial.print(",");
-  Serial.print(gz, 4);
-  Serial.print(",");
-  Serial.print(ax, 4);
-  Serial.print(",");
-  Serial.print(ay, 4);
-  Serial.print(",");
-  Serial.print((az - 1), 4);
-  Serial.print("\r\n");
+  // int time = millis();
+  // // Accellerometer / Gyroscope message to x-IMU3 software
+  // // I,1000000,0.0000,0.0000,0.0000,0.0000,0.0000,1.0000\r\n
+  // Serial.print("I,");
+  // Serial.print(time);
+  // Serial.print("00,");
+  // Serial.print(gx, 4);
+  // Serial.print(",");
+  // Serial.print(gy, 4);
+  // Serial.print(",");
+  // Serial.print(gz, 4);
+  // Serial.print(",");
+  // Serial.print(ax, 4);
+  // Serial.print(",");
+  // Serial.print(ay, 4);
+  // Serial.print(",");
+  // Serial.print(az, 4);
+  // Serial.print("\r\n");
 
 
-  const FusionQuaternion quaternion = FusionAhrsGetQuaternion(&ahrs);
-  float quatw = quaternion.element.w;
-  float quatx = quaternion.element.x;
-  float quaty = quaternion.element.y;
-  float quatz = quaternion.element.z;
+  // const FusionQuaternion quaternion = FusionAhrsGetQuaternion(&ahrs);
+  // float quatw = quaternion.element.w;
+  // float quatx = quaternion.element.x;
+  // float quaty = quaternion.element.y;
+  // float quatz = quaternion.element.z;
 
-  // Quaternion message to x-IMU3 software
-  // Q,1000000,1.0000,0.0000,0.0000,0.0000\r\n
-  Serial.print("Q,");
-  Serial.print(time);
-  Serial.print("00,");
-  Serial.print(quatw, 4);
-  Serial.print(",");
-  Serial.print(quatx, 4);
-  Serial.print(",");
-  Serial.print(quaty, 4);
-  Serial.print(",");
-  Serial.print(quatz, 4);
-  Serial.print("\r\n");
+  // // Quaternion message to x-IMU3 software
+  // // Q,1000000,1.0000,0.0000,0.0000,0.0000\r\n
+  // Serial.print("Q,");
+  // Serial.print(time);
+  // Serial.print("00,");
+  // Serial.print(quatw, 4);
+  // Serial.print(",");
+  // Serial.print(quatx, 4);
+  // Serial.print(",");
+  // Serial.print(quaty, 4);
+  // Serial.print(",");
+  // Serial.print(quatz, 4);
+  // Serial.print("\r\n");
 }

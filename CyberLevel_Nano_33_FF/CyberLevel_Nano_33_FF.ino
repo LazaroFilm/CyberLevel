@@ -15,7 +15,7 @@
 /* === === === === === IMU/Fusion === === === === === */
 // IMU
 // #define SAMPLE_PERIOD (0.01f)  // replace this with actual sample period
-#define SAMPLE_RATE (243)  // replace this with actual sample rate
+#define SAMPLE_RATE (476)  // replace this with actual sample rate
 
 
 /* === === === === === Buttons / pot / encoder === === === === ===*/
@@ -67,7 +67,7 @@ const FusionMatrix softIronMatrix = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 
 const FusionVector hardIronOffset = { 0.0f, 0.0f, 0.0f };
 
 const FusionAhrsSettings settings = {
-  .gain = 0.2f,
+  .gain = 0.25f,
   .accelerationRejection = 10.0f,
   .magneticRejection = 20.0f,
   .rejectionTimeout = 5 * SAMPLE_RATE, /* 5 seconds */
@@ -264,7 +264,7 @@ void loop() {
   // plot("Smoothed_Pot", Pot, false);
   // plot("Encoder", positionWheel, false);
   // plot("Angle_Offset", angleOffset, false);
-  // plot("Pixel", (pixelPos), false);
+  plot("Pixel", (pixelPos), false);
   // Serial.print("\tintPixel: ");
   // Serial.print(intPixel);
   // Serial.print("\tcenterPixel: ");
@@ -284,6 +284,6 @@ void loop() {
   // displaySensorStatus();
 
   // Serial.println("");  // new line for next sample
-  // Serial.println("Min:-90,Max:90");
+  Serial.println("Min:-90,Max:90");
   // Serial.println("Min:-1025,Max:1025");
 }

@@ -1,6 +1,7 @@
 
-/*=== === === === === === === === === === === === === === === === === === === === === === === === ===
-=== === === === === === === === === === === === === === === === === === === === === === === === === */
+/*=== === === === === === === === === === === === === === === === === === ===
+  === === === === === === === ===  Functions  === === === === === === === === 
+  === === === === === === === === === === === === === === === === === === ===*/
 
 /* _________ BUTTON ACTIONS _________ */
 
@@ -48,6 +49,7 @@ void changeZoom() {
     // EEPROM.update(eeZoom, 5);
     delay(500);
   }
+  unsavedZoom = true;
   // EEPROM.put(eeZoom, zoom);
   Serial.print("\n\nZoom changed to: ");
   Serial.println(zoom);
@@ -86,11 +88,6 @@ void changeAxis() {
   Serial.println(axis);
 }
 
-// Callback function to be called when the button is pressed.
-// void onPressed() {
-//   Serial.println("Button pressed");
-// }
-
 void plot(String label, int value, bool last) {
   Serial.print(label);  // May be an empty string.
   if (label != "") Serial.print(":");
@@ -99,7 +96,13 @@ void plot(String label, int value, bool last) {
   else Serial.println();
 }
 
-void rgb_led(char color) {
+void resetAngle() {
+  Serial.print("Resetting angle adjustment");
+  wheelEnc.readAndReset();
+  //Add zero out IMU here if possible.
+}
+
+void rgb_led(char color) {  // RGB led on the Nano 33 BLE board
   if (color == 'o') {
     digitalWrite(LEDR, HIGH);
     digitalWrite(LEDG, HIGH);
@@ -139,7 +142,7 @@ void rgb_led(char color) {
   };
 }
 
-void pixelBubble() {
+void pixelBubble() {                 // NeoPixel LED strip
   if (intPixel >= NUM_PIXELS - 1) {  // out of bounds make last pixel on.
     rgb_led('r');
     pixels.setPixelColor(centerPixel, rgbcolorC);

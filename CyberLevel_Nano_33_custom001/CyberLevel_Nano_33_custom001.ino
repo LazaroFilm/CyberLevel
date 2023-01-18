@@ -1,14 +1,21 @@
-#include <EasyButton.h>
+// using ErniW / Arduino-IMU-and-AHRS-tests
+
+#define ARDUINO_ARCH_NRF52840
+// #define ENCODER_OPTIMIZE_INTERRUPTS
+
 #include <Wire.h>
+#include <Arduino_LSM9DS1.h>
+#include <Adafruit_AHRS.h>
 #include <Adafruit_NeoPixel.h>
-#include <ReefwingAHRS.h>
-#include <ReefwingFilter.h>
 #include <NanoBLEFlashPrefs.h>
+#include <EasyButton.h>
+#include <Encoder.h>
+// #include <CyberLevel_functions.ino>
 
 /* === === === === === Flash === === === === === */
 
 typedef struct flashStruct {
-  int eeZoom;
+  int flashZoom;
 } flashPrefs;
 
 NanoBLEFlashPrefs myFlashPrefs;
@@ -16,13 +23,16 @@ flashPrefs prefs;
 
 /* === === === === === IMU === === === === === */
 
-LSM9DS1 imu;
-EulerAngles angles;
+Adafruit_Madgwick filter;
 
-/* === === === === === pixel / buttons / pot === === === === ===*/
+/* === === === === === Buttons / pot / encoder === === === === ===*/
 
-#define BUTTON_PIN D3  // Button switch
-#define POT_PIN A7     // Potentiometer
+// #define BUTTON_PIN D3  // Button switch
+#define BUTTON_PIN D4  // Encodder button
+// #define POT_PIN A7     // Potentiometer
+#define ENC_PIN1 D5
+#define ENC_PIN2 D6
+Encoder wheelEnc(ENC_PIN1, ENC_PIN2);
 
 /* === === === === === RGB LED === === === === === */
 
@@ -50,9 +60,27 @@ Adafruit_NeoPixel pixels(NUM_PIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
 
 /* constant values */
 const uint8_t centerPixel = (NUM_PIXELS - 1) / 2;  // Center of the LED strip
-const int numReadings = 12;
+
+// IMU Constants
+int updateRate = 200;
+int printEveryUpdate = 5;
+float mag_hardIron[3] = { 49.29, -34.35, -58.99 };
+float mag_softIron[9] = {
+  0.995, 0.025, 0.003,
+  0.025, 0.989, -0.006,
+  0.003, -0.006, 1.017
+};
+float accel_calibration[3] = { -0.01, 0.06, 0.01 };
+float gyro_calibration[3] = { -0.55, 0.52, 1.15 };
+
 
 /* variable values */
+// IMU
+unsigned long timestamp = 0;
+int counter = 0;
+float ax, ay, az, gx, gy, gz, mx, my, mz = 0;
+
+// CyberLevel
 double angle;        // Roll angle in degree
 double decimalOnly;  // only the decimal of the pixel number
 double floatPixel;   // Pixel numer
@@ -63,12 +91,7 @@ int8_t intPixel;     // pixel number without decimal
 uint8_t zoom = 20;   // zoom factor of the bubble
 uint8_t axis = 1;    // axis displayed
 
-// pot smoothing
-float readings[numReadings];  // the readings from the analog input
-int readIndex = 0;            // the index of the current reading
-float total = 0;              // the running total
-float Pot = 0;                // the pot average
-// Led colors
+// LED colors
 uint32_t bgcolor;     // background color
 uint32_t rgbcolor0;   // leading pixel color
 uint32_t rgbcolor1;   // main pixel color
@@ -82,12 +105,10 @@ uint32_t rgbcolorC0;  // leading pixel when centered
 uint32_t rgbcolorC1;  // main pixel when centered
 uint32_t rgbcolorC2;  // trailing pixel when centered
 
-// pot filter
-static SMA<5> sma;
-static EMA<2> ema;
-int rawValue, smaValue, emaValue;
+// Encoder
+int8_t positionWheel = -999;
 
-// button
+// Button
 uint8_t debounce = 40;
 bool pullup = true;
 bool invert = true;
@@ -95,18 +116,20 @@ EasyButton button(BUTTON_PIN, debounce, pullup, invert);
 
 void (*resetFunc)(void) = 0;  // create a standard reset function
 
+// Flash
+bool unsavedZoom = false;  // Check if any setting needs to be saved to Flash
 
-/* 
-=== === === === === === === === === === === === === === === === === === === === === === === === === === === === === === 
+/*
+=== === === === === === === === === === === === === === === === === === === === === === === === === === === === === ===
 === === === === === === === === === === === ===  S E T U P  === === === === === === === === === === === === === === ===
 === === === === === === === === === === === === === === === === === === === === === === === === === === === === === ===
 */
 void setup() {
-  //flash
+  // flash
   flashPrefs prefsOut;
 
   //  Start Serial and wait for connection
-  Serial.begin(115200);
+  Serial.begin(115200, SERIAL_8N1);
   delay(1000);
   if (!Serial) {
     Serial.print("Waiting for Serial...");
@@ -114,11 +137,12 @@ void setup() {
   }
   Serial.println(" === === === Seial started === === === ");
 
-
-  // flash
+  // Reads prefs saved in Flash
   int rc = myFlashPrefs.readPrefs(&prefsOut, sizeof(prefsOut));
   if (rc == FDS_SUCCESS) {
-    Serial.println(prefsOut.eeZoom);
+    zoom = prefsOut.flashZoom;
+    Serial.print("Zoom read from Flash: ");
+    Serial.print(prefsOut.flashZoom);
   } else {
     Serial.print("No preferences found. Return code: ");
     Serial.print(rc);
@@ -128,107 +152,112 @@ void setup() {
 
   // initialize EasyButton
   button.begin();
+
   // Initialize the LSM9DS1 IMU
-  imu.begin();
+  if (!IMU.begin()) {
+    Serial.println("LSM9DS1 initialization error");
+    while (1)
+      ;
+  }
+  filter.begin(updateRate);
+
+  Wire1.begin();  //?? WHAT ARE THESE??
+  Wire1.beginTransmission(0x1e);
+  Wire1.write(0x20);
+  Wire1.write(0x9e);
+  Wire1.endTransmission();
+
   // Initialize NeoPixel strip
   pixels.begin();
+
   // Set RGB LED pins
   pinMode(LEDR, OUTPUT);
   pinMode(LEDG, OUTPUT);
   pinMode(LEDB, OUTPUT);
+
   // Turn RGB LEDs on
   rgb_led('i');
 
-  //dim white center pixel
+  // dim white center pixel
   pixels.clear();
   pixels.setPixelColor(centerPixel, pixels.Color(10, 10, 10));
   pixels.show();
 
-  //  magnetic declination (neg: northern emi, pos: southern emi)
-  imu.setDeclination(-12.79);
-  imu.setGyroResolution(Gscale::GFS_2000DPS);    // setting the Gyro scale: GFS_245DPS | GFS_500DPS | GFS_2000DPS
-  imu.setFusionAlgorithm(SensorFusion::FUSION);  // Sensor furion type: MADGWICK | MAHONY | COMPLEMENTARY | FUSION | CLASSIC | NONE
-  //  Fusion settings
-  imu.setFusionPeriod(0.1f);  // Estimated sample period = 0.01 s = 100 Hz
-  // imu.setFusionThreshold(2.0f);  // Stationary threshold = 0.5 degrees per second
-  imu.setFusionGain(0.4);  // Default Fusion Filter Gain 0.5 - try 7.5 for a much quicker response
-
-
-  if (!imu.connected()) {
-    Serial.println("LSM9DS1 IMU Not Connected.");
-    while (!imu.connected())
-      ;
-  }
-
-  Serial.println("LSM9DS1 IMU Connected.");
-  //  Paste your calibration bias offset HERE
-  //  This information comes from the testAndCalibrate.ino
-  //  sketch in the library examples sub-directory.
-
-  imu.loadAccBias(0.039368, 0.050720, 0.008362);
-  imu.loadGyroBias(0.022430, -0.523376, 0.314026);
-  imu.loadMagBias(0.126953, 0.127441, -0.152466);
-
-  //  This sketch assumes that the LSM9DS1 is already calibrated,
-  //  If so, start processing IMU data. If not, run the testAndCalibrate
-  //  sketch first.
-  imu.start();
-
-  // /* EasyButton callbacks*/
-  button.onSequence(1, 300, changeZoom);
-  button.onPressedFor(300, changeAxis);
-
-  Serial.print("Gyro Resolution: ");
-  Serial.println(imu.getGyroResolution());
+  // EasyButton callbacks
+  button.onSequence(1, 300, resetAngle);
+  button.onPressedFor(300, changeZoom);
 }
 
-/* 
-=== === === === === === === === === === === === === === === === === === === === === === === === === === === === === === 
+/*
+=== === === === === === === === === === === === === === === === === === === === === === === === === === === === === ===
 === === === === === === === === === === === === L O O P === === === === === === === === === === === === === === === ===
 === === === === === === === === === === === === === === === === === === === === === === === === === === === === === ===
 */
 void loop() {
+  // Encoder
+  long newWheel = wheelEnc.read();
+  if (newWheel != positionWheel) {
+    // Serial.print("Wheel = ");
+    // Serial.print(newWheel);
+    // Serial.println(", ");
+    positionWheel = newWheel;
+  }
 
   // Check button status
   button.read();
 
-  // Check for new IMU data and update angles
-  angles = imu.update();
-  SensorData data = imu.rawData();
+  /* === === === === IMU === === === === */
 
-  // Wait for new sample - 7 ms delay provides a 100Hz sample rate / loop frequency
-  delay(7);
+  //if(millis() - timestamp >= 1000 / updateRate){
+
+  if (IMU.accelerationAvailable()) IMU.readAcceleration(ax, ay, az);
+  if (IMU.gyroscopeAvailable()) IMU.readGyroscope(gx, gy, gz);
+  if (IMU.magneticFieldAvailable()) IMU.readMagneticField(mx, my, mz);
+
+  calibrate(&ax, &ay, &az, &gx, &gy, &gz, &mx, &my, &mz);
+
+  //filter.update(gx, gy, gz, ax, ay, az, mx, my, mz);
+  filter.update(-gy, -gx, gz, -ay, -ax, az, mx, my, mz);
+
+  timestamp = millis();
+
+  // counter++;
+
+  // if (counter == printEveryUpdate) {
+
+  //   float w, x, y, z;
+  //   // filter.getQuaternion(&w, &x, &y, &z);
+
+  //   // Serial.print("Quaternion: ");
+  //   // Serial.print(w);
+  //   // Serial.print(',');
+  //   // Serial.print(x);
+  //   // Serial.print(',');
+  //   // Serial.print(y);
+  //   // Serial.print(',');
+  //   // Serial.println(z);
+
+  //   float roll = filter.getRoll();
+  //   float pitch = filter.getPitch();
+  //   float yaw = filter.getYaw();
+
+  //   Serial.print("Orientation: ");
+  //   Serial.print(yaw);
+  //   Serial.print(',');
+  //   Serial.print(pitch);
+  //   Serial.print(',');
+  //   Serial.println(roll);
+
+  //   counter = 0;
+  // }
+  //}
+
 
   /* ---------- above from Reefwing, below from cyberlevel ---------- */
-  angle = angles.pitch;
+  angle = filter.getPitch();
 
-  /* Offset the angle with the potentiometer */
-  //float Pot = analogRead(POT_PIN);            // 0 to 1023
-
-  // /* smoothing the pot input*/
-  // // subtract the last reading:
-  // total = total - readings[readIndex];
-  // // read from the sensor:
-  // readings[readIndex] = analogRead(POT_PIN);
-  // // add the reading to the total:
-  // total = total + readings[readIndex];
-  // // advance to the next position in the array:
-  // readIndex = readIndex + 1;
-  // // if we're at the end of the array...
-  // if (readIndex >= numReadings) {
-  //   // ...wrap around to the beginning:
-  //   readIndex = 0;
-  // }
-  // // calculate the average:
-  // Pot = total / numReadings;
-  // // send it to the computer as ASCII digit
-
-  /* Reefwing smoothing */
-  rawValue = analogRead(POT_PIN);
-  // Pot = sma(rawValue);
-  Pot = ema(rawValue);
-
-  angleOffset = (Pot / (1023 / 2) * 10) - 10;  // offset bubble with pot
+  // angleOffset = (Pot / (1023 / 2) * 10) - 10;  // offset bubble with pot
+  angleOffset = positionWheel * 0.1;  // Enc
   // angleOffset = 0;  //! Disables offset !
 
   /* angle to pixel with offset and zoom factored in */
@@ -251,7 +280,6 @@ void loop() {
   rgbcolor0 = pixels.ColorHSV(pixelColor, 255, (decimalOnly * 255) * 0.5);          // leading pixel
   rgbcolor1 = pixels.ColorHSV(pixelColor, 255, 255 * 0.5);                          // main pixel
   rgbcolor2 = pixels.ColorHSV(pixelColor, 255, (255 - (decimalOnly * 255)) * 0.5);  // trailing pixel
-  // rgbcolorS = pixels.Color(1, 1, 1);
   rgbcolorS = pixels.ColorHSV(BLUE, 255, 0);
   rgbcolorS0 = pixels.ColorHSV(BLUE, 255, decimalOnly * 255);
   rgbcolorS1 = pixels.ColorHSV(BLUE, 255, 255);
@@ -269,12 +297,18 @@ void loop() {
 
   pixels.show();  // displays the pixels
 
+  /* Flash saving */
+  if (unsavedZoom) {
+    Serial.println("Writing values to Flash");
+    myFlashPrefs.writePrefs(&prefs, sizeof(prefs));
+    unsavedZoom = false;
+  }
 
   /* === === === === === SERIAL PRINTS === === === === === */
 
   //  Uncomment to DEBUG raw sensor data:
-  plot("ax", (1000 * data.ax), false);
-  plot("gx", (2 * data.gx), false);
+  // plot("ax", (1000 * data.ax), false);
+  // plot("gx", (2 * data.gx), false);
   // plot("mx", (data.mx), false);
   // plot("ay", (1000 * data.ay), false);
   // plot("gy", (data.gy), false);
@@ -306,7 +340,7 @@ void loop() {
   // Serial.print(1000 * data.mz);
   // Serial.println(" mG");
 
-  plot("Angles", (angles.pitch * 10), false);
+  // plot("Angles", (angles.pitch * 10), false);
   // Serial.print("\tAngles: ");
   // Serial.print(angles.pitch);
   // Serial.print(F("Euler: "));
@@ -326,6 +360,7 @@ void loop() {
   // Serial.print(angleOffset);
   // plot("Raw_Pot", rawValue, false);
   // plot("Smoothed_Pot", Pot, false);
+  // plot("Encoder", positionWheel, false);
   // plot("Angle_Offset", angleOffset, false);
   // Serial.print("\tintPixel: ");
   // Serial.print(intPixel);
@@ -346,5 +381,5 @@ void loop() {
   // displaySensorStatus();
 
   // Serial.println("");  // new line for next sample
-  Serial.println("Min:-1023,Max:1023");
+  // Serial.println("Min:-1023,Max:1023");
 }
