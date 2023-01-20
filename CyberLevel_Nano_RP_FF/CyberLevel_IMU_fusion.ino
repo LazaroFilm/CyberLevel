@@ -140,33 +140,12 @@ void loopIMU() {
   // Serial.print(temp.temperature);
   // Serial.println(" deg C");
 
-  // /* Display the results (acceleration is measured in m/s^2) */
-  // Serial.print("\t\tAccel X: ");
-  // Serial.print(accel.acceleration.x);
-  // Serial.print(" \tY: ");
-  // Serial.print(accel.acceleration.y);
-  // Serial.print(" \tZ: ");
-  // Serial.print(accel.acceleration.z);
-  // Serial.println(" m/s^2 ");
-
-  // /* Display the results (rotation is measured in rad/s) */
-  // Serial.print("\t\tGyro X: ");
-  // Serial.print(gyro.gyro.x);
-  // Serial.print(" \tY: ");
-  // Serial.print(gyro.gyro.y);
-  // Serial.print(" \tZ: ");
-  // Serial.print(gyro.gyro.z);
-  // Serial.println(" radians/s ");
-  // Serial.println();
-
-  // delay(100);
-
   gx = gyro.gyro.x * 57.2957795130931;  // rad/s to deg/s
   gy = gyro.gyro.y * 57.2957795130931;  // rad/s to deg/s
   gz = gyro.gyro.z * 57.2957795130931;  // rad/s to deg/s
   ax = accel.acceleration.x;
   ay = accel.acceleration.y;
-  ax = accel.acceleration.z;
+  az = accel.acceleration.z;
 
   // plot("ax", ax, false);
   // plot("ay", ay, false);
@@ -192,7 +171,7 @@ void loopFusion() {
   // Apply calibration
   gyroscope = FusionCalibrationInertial(gyroscope, gyroscopeMisalignment, gyroscopeSensitivity, gyroscopeOffset);
   accelerometer = FusionCalibrationInertial(accelerometer, accelerometerMisalignment, accelerometerSensitivity, accelerometerOffset);
-  magnetometer = FusionCalibrationMagnetic(magnetometer, softIronMatrix, hardIronOffset);
+  // magnetometer = FusionCalibrationMagnetic(magnetometer, softIronMatrix, hardIronOffset);
 
   // Update gyroscope offset correction algorithm
   gyroscope = FusionOffsetUpdate(&offset, gyroscope);
@@ -218,17 +197,17 @@ void loopFusion() {
   Serial.print("I,");
   Serial.print(time);
   Serial.print("00,");
-  Serial.print(gx, 4);
+  Serial.print(gyroscope.axis.x, 4);
   Serial.print(",");
-  Serial.print(gy, 4);
+  Serial.print(gyroscope.axis.y, 4);
   Serial.print(",");
-  Serial.print(gz, 4);
+  Serial.print(gyroscope.axis.z, 4);
   Serial.print(",");
-  Serial.print(ax, 4);
+  Serial.print(accelerometer.axis.x, 4);
   Serial.print(",");
-  Serial.print(ay, 4);
+  Serial.print(accelerometer.axis.y, 4);
   Serial.print(",");
-  Serial.print((az - 1), 4);
+  Serial.print(accelerometer.axis.z , 4);
   Serial.print("\r\n");
 
 

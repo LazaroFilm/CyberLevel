@@ -1,4 +1,5 @@
 
+  void loopPrint() {
   /* === === === === === SERIAL PRINTS === === === === === */
 
   //  Uncomment to DEBUG raw sensor data:
@@ -38,9 +39,9 @@
   // Serial.print(F("\tAngle: "));
   // Serial.print(Angle, 8);
 
-  plot("Ax", ax * 1000, false);
-  plot("Ay", ay * 1000, false);
-  plot("Az", az * 1000, false);
+  plot("Ax", ax, false);
+  plot("Ay", ay, false);
+  plot("Az", az, false);
 
   plot("Gx", gx, false);
   plot("Gy", gy, false);
@@ -79,3 +80,4 @@
   Serial.println("");  // new line for next sample
   // Serial.println("Min:-90,Max:90");
   // Serial.println("Min:-1025,Max:1025");
+  }

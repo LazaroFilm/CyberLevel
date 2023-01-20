@@ -7,10 +7,11 @@
 #define ARDUINO_NANO_RP2040_CONNECT
 // #define ENCODER_OPTIMIZE_INTERRUPTS
 #include <Wire.h>
+#include <WiFiNINA.h>
 #include <Adafruit_NeoPixel.h>
 #include <EasyButton.h>
 #include <Encoder.h>
-#include <NanoBLEFlashPrefs.h>
+// #include <NanoBLEFlashPrefs.h>
 //IMU/Fusion
 #include <Adafruit_LSM6DSOX.h>
 // #include <Arduino_LSM9DS1.h>  //Femme's version
@@ -27,15 +28,15 @@ Adafruit_LSM6DSOX sox;
 /* === === === === === Buttons / pot / encoder === === === === ===*/
 
 // #define BUTTON_PIN D3  // Button switch
-#define BUTTON_PIN D4  // Encodder button
+#define BUTTON_PIN 4  // Encodder button
 // #define POT_PIN A7     // Potentiometer
-#define ENC_PIN1 D5
-#define ENC_PIN2 D6
+#define ENC_PIN1 5
+#define ENC_PIN2 6
 Encoder wheelEnc(ENC_PIN1, ENC_PIN2);
 
 /* === === === === === RGB LED === === === === === */
 
-#define LED_PIN D2  // NeoPixel strip
+#define LED_PIN 2  // NeoPixel strip
 
 // How many NeoPixels are attached to the Arduino?
 #define NUM_PIXELS 20
@@ -65,10 +66,10 @@ const uint8_t centerPixel = (NUM_PIXELS - 1) / 2;  // Center of the LED strip
 // Define calibration (replace with actual calibration data)
 const FusionMatrix gyroscopeMisalignment = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f };
 const FusionVector gyroscopeSensitivity = { 1.0f, 1.0f, 1.0f };
-const FusionVector gyroscopeOffset = { 0.0f, 0.0f, 0.0f };
+const FusionVector gyroscopeOffset = { -0.364562f, -0.792673f, -0.117901f };
 const FusionMatrix accelerometerMisalignment = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f };
 const FusionVector accelerometerSensitivity = { 1.0f, 1.0f, 1.0f };
-const FusionVector accelerometerOffset = { 0.0f, 0.0f, 0.0f };
+const FusionVector accelerometerOffset = { -0.016507f, -0.213300f, -0.088512f };
 const FusionMatrix softIronMatrix = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f };
 const FusionVector hardIronOffset = { 0.0f, 0.0f, 0.0f };
 
@@ -138,7 +139,7 @@ void setup() {
   }
   Serial.println(" === === === Seial started === === === ");
 
-  setupFlash();  // Reads the prefs stored in the flash and loads them.
+  // setupFlash();  // Reads the prefs stored in the flash and loads them.
 
   /* === === === === Initialize EasyButton === === === === */
 
@@ -210,7 +211,7 @@ void loop() {
 
   /* === === === === Flash === === === === */
 
-  loopFlash();  // checks for updated prefs and saves them to the flash
+  // loopFlash();  // checks for updated prefs and saves them to the flash
 
   loopPrint();
 
