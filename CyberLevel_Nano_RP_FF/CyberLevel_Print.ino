@@ -1,5 +1,5 @@
 
-  void loopPrint() {
+void loopPrint() {
   /* === === === === === SERIAL PRINTS === === === === === */
 
   //  Uncomment to DEBUG raw sensor data:
@@ -39,16 +39,16 @@
   // Serial.print(F("\tAngle: "));
   // Serial.print(Angle, 8);
 
-  plot("Ax", ax, false);
-  plot("Ay", ay, false);
-  plot("Az", az, false);
+  // plot("Ax", ax, false);
+  // plot("Ay", ay, false);
+  // plot("Az", az, false);
 
-  plot("Gx", gx, false);
-  plot("Gy", gy, false);
-  plot("Gz", gz, false);
+  // plot("Gx", gx, false);
+  // plot("Gy", gy, false);
+  // plot("Gz", gz, false);
 
 
-  // plot("Angle", angle, false);
+  plot("Angle", angle, false);
 
   // Serial.print("\tpixelPos: ");
   // Serial.print(pixelPos);
@@ -56,9 +56,9 @@
   // Serial.print(angleOffset);
   // plot("Raw_Pot", rawValue, false);
   // plot("Smoothed_Pot", Pot, false);
-  // plot("Encoder", positionWheel, false);
-  // plot("Angle_Offset", angleOffset, false);
-  // plot("Pixel", (pixelPos), false);
+  plot("Encoder", newValue, false);
+  plot("Angle_Offset", angleOffset, false);
+  plot("Pixel", (pixelPos), false);
   // Serial.print("\tintPixel: ");
   // Serial.print(intPixel);
   // Serial.print("\tcenterPixel: ");
@@ -80,4 +80,37 @@
   Serial.println("");  // new line for next sample
   // Serial.println("Min:-90,Max:90");
   // Serial.println("Min:-1025,Max:1025");
-  }
+}
+
+void printXIMU() {
+  // Accellerometer / Gyroscope message to x-IMU3 software
+  // I,1000000,0.0000,0.0000,0.0000,0.0000,0.0000,1.0000\r\n
+  Serial.print("I,");
+  Serial.print(fusionTime);
+  Serial.print("00,");
+  Serial.print(cax, 4);
+  Serial.print(",");
+  Serial.print(cay, 4);
+  Serial.print(",");
+  Serial.print(caz, 4);
+  Serial.print(",");
+  Serial.print(cgx, 4);
+  Serial.print(",");
+  Serial.print(cgy, 4);
+  Serial.print(",");
+  Serial.print(cgz, 4);
+  Serial.print("\r\n");
+  // Quaternion message to x-IMU3 software
+  // Q,1000000,1.0000,0.0000,0.0000,0.0000\r\n
+  Serial.print("Q,");
+  Serial.print(fusionTime);
+  Serial.print("00,");
+  Serial.print(quatw, 4);
+  Serial.print(",");
+  Serial.print(quatx, 4);
+  Serial.print(",");
+  Serial.print(quaty, 4);
+  Serial.print(",");
+  Serial.print(quatz, 4);
+  Serial.print("\r\n");
+}
