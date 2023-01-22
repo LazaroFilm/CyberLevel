@@ -1,0 +1,6 @@
+{
+    "port": "/dev/tty.usbmodem14401",
+    "board": "arduino:mbed_nano:nano33ble",
+    "programmer": "arduino:avrispmkii",
+    "sketch": "CyberLevel nano 33 BLE/CyberLevel_Reefwing_Nano_sRPY/CyberLevel_Reefwing_Nano_sRPY.ino"
+}
