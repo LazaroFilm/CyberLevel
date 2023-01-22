@@ -88,7 +88,7 @@ void changeAxis() {
   Serial.println(axis);
 }
 
-void plot(String label, int value, bool last) {
+void plot(String label, float value, bool last) {
   Serial.print(label);  // May be an empty string.
   if (label != "") Serial.print(":");
   Serial.print(value);
@@ -97,8 +97,10 @@ void plot(String label, int value, bool last) {
 }
 
 void resetAngle() {
-  Serial.print("Resetting angle adjustment");
-  wheelEnc.readAndReset();
+  Serial.println("Resetting angle adjustment - TODO");
+  // knob.readAndReset();
+  rotaryCount = 0;
+  newValue = 0;
   //Add zero out IMU here if possible.
 }
 
@@ -140,59 +142,4 @@ void rgb_led(char color) {  // RGB led on the Nano 33 BLE board
     digitalWrite(LEDG, HIGH);
     digitalWrite(LEDB, HIGH);
   };
-}
-
-void pixelBubble() {                 // NeoPixel LED strip
-  if (intPixel >= NUM_PIXELS - 1) {  // out of bounds make last pixel on.
-    rgb_led('r');
-    pixels.setPixelColor(centerPixel, rgbcolorC);
-    pixels.setPixelColor(centerPixel - 1, rgbcolorS);
-    pixels.setPixelColor(centerPixel + 1, rgbcolorS);
-    pixels.setPixelColor(NUM_PIXELS - 1, 255, 0, 0);
-  } else if (intPixel <= 0) {  // out of bounds make first pixel on.
-    rgb_led('r');
-    pixels.setPixelColor(centerPixel, rgbcolorC);
-    pixels.setPixelColor(centerPixel - 1, rgbcolorS);
-    pixels.setPixelColor(centerPixel + 1, rgbcolorS);
-    pixels.setPixelColor(0, 255, 0, 0);
-  } else if (intPixel == centerPixel - 2) {  // on the edge
-    rgb_led('g');
-    pixels.setPixelColor(intPixel, rgbcolor1);
-    pixels.setPixelColor(intPixel - 1, rgbcolor2);
-    pixels.setPixelColor(centerPixel - 1, rgbcolorS0);
-    pixels.setPixelColor(centerPixel, rgbcolorC);
-    pixels.setPixelColor(centerPixel + 1, rgbcolorS);
-  } else if (intPixel == centerPixel - 1) {  // side center
-    rgb_led('b');
-    pixels.setPixelColor(intPixel - 1, rgbcolor2);
-    pixels.setPixelColor(centerPixel - 1, rgbcolorS1);
-    pixels.setPixelColor(centerPixel, rgbcolorC0);
-    pixels.setPixelColor(centerPixel + 1, rgbcolorS);
-  } else if (intPixel == centerPixel) {  // dead center
-    rgb_led('p');
-    pixels.setPixelColor(centerPixel - 1, rgbcolorS2);
-    pixels.setPixelColor(centerPixel, rgbcolorC1);
-    pixels.setPixelColor(centerPixel + 1, rgbcolorS0);
-  } else if (intPixel == centerPixel + 1) {  // side center
-    rgb_led('b');
-    pixels.setPixelColor(intPixel + 1, rgbcolor0);
-    pixels.setPixelColor(centerPixel - 1, rgbcolorS);
-    pixels.setPixelColor(centerPixel, rgbcolorC2);
-    pixels.setPixelColor(centerPixel + 1, rgbcolorS1);
-  } else if (intPixel == centerPixel + 2) {  // on the edge
-    rgb_led('g');
-    pixels.setPixelColor(intPixel, rgbcolor1);
-    pixels.setPixelColor(intPixel + 1, rgbcolor0);
-    pixels.setPixelColor(centerPixel - 1, rgbcolorS);
-    pixels.setPixelColor(centerPixel, rgbcolorC);
-    pixels.setPixelColor(centerPixel + 1, rgbcolorS2);
-  } else {
-    rgb_led('y');
-    pixels.setPixelColor(intPixel + 1, rgbcolor0);
-    pixels.setPixelColor(intPixel, rgbcolor1);
-    pixels.setPixelColor(intPixel - 1, rgbcolor2);
-    pixels.setPixelColor(centerPixel - 1, rgbcolorS);
-    pixels.setPixelColor(centerPixel, rgbcolorC);
-    pixels.setPixelColor(centerPixel + 1, rgbcolorS);
-  }
 }
