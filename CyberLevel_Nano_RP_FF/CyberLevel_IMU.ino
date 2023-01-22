@@ -2,8 +2,6 @@
 
 void setupIMU() {
   if (!sox.begin_I2C()) {
-    // if (!sox.begin_SPI(LSM_CS)) {
-    // if (!sox.begin_SPI(LSM_CS, LSM_SCK, LSM_MISO, LSM_MOSI)) {
     Serial.println("Failed to find LSM6DSOX chip");
     while (1) {
       delay(10);
@@ -29,7 +27,7 @@ void setupIMU() {
       break;
   }
 
-  sox.setGyroRange(LSM6DS_GYRO_RANGE_1000_DPS);
+  sox.setGyroRange(LSM6DS_GYRO_RANGE_500_DPS);
   Serial.print("Gyro range set to: ");
   switch (sox.getGyroRange()) {
     case LSM6DS_GYRO_RANGE_125_DPS:
@@ -51,7 +49,7 @@ void setupIMU() {
       break;  // unsupported range for the DSOX
   }
 
-  sox.setAccelDataRate(LSM6DS_RATE_208_HZ);
+  sox.setAccelDataRate(LSM6DS_RATE_104_HZ);
   Serial.print("Accelerometer data rate set to: ");
   switch (sox.getAccelDataRate()) {
     case LSM6DS_RATE_SHUTDOWN:
@@ -89,7 +87,7 @@ void setupIMU() {
       break;
   }
 
-  sox.setGyroDataRate(LSM6DS_RATE_208_HZ);
+  sox.setGyroDataRate(LSM6DS_RATE_104_HZ);
   Serial.print("Gyro data rate set to: ");
   switch (sox.getGyroDataRate()) {
     case LSM6DS_RATE_SHUTDOWN:
@@ -126,6 +124,13 @@ void setupIMU() {
       Serial.println("6.66 KHz");
       break;
   }
+
+  // sox.configInt1(drdy_g); // Gyro ready interrupt - can we use it to time gyro datas?
+  // sox.highPassFilter(true, LSM6DS_HPF_ODR_DIV_9); // high pass filter -- removes gravity
+  // LSM6DS_HPF_ODR_DIV_50 = 0,
+  // LSM6DS_HPF_ODR_DIV_100 = 1,
+  // LSM6DS_HPF_ODR_DIV_9 = 2,
+  // LSM6DS_HPF_ODR_DIV_400 = 3,
 }
 
 void loopIMU() {
@@ -140,12 +145,15 @@ void loopIMU() {
   // Serial.print(temp.temperature);
   // Serial.println(" deg C");
 
-  gx = gyro.gyro.x * 57.2957795130931;  // rad/s to deg/s
-  gy = gyro.gyro.y * 57.2957795130931;  // rad/s to deg/s
-  gz = gyro.gyro.z * 57.2957795130931;  // rad/s to deg/s
-  ax = accel.acceleration.x;
+  // gx = gyro.gyro.x * 57.2957795130931;  // rad/s to deg/s
+  // gy = gyro.gyro.y * 57.2957795130931;  // rad/s to deg/s
+  // gz = gyro.gyro.z * 57.2957795130931;  // rad/s to deg/s
+  gx = -gyro.gyro.x;
+  gy = gyro.gyro.y;
+  gz = -gyro.gyro.z;
+  ax = -accel.acceleration.x;
   ay = accel.acceleration.y;
-  az = accel.acceleration.z;
+  az = -accel.acceleration.z;
 
   // plot("ax", ax, false);
   // plot("ay", ay, false);
@@ -153,81 +161,4 @@ void loopIMU() {
   // plot("gx", gx, false);
   // plot("gy", gy, false);
   // plot("gz", gz, false);
-}
-
-/* === === === === === Fusion === === === === === */
-
-
-void setupFusion() {
-}
-void loopFusion() {
-
-  // Acquire latest sensor data
-  const clock_t timestamp = clock();            // replace this with actual gyroscope timestamp
-  FusionVector gyroscope = { gx, gy, gz };      // replace this with actual gyroscope data in degrees/s
-  FusionVector accelerometer = { ax, ay, az };  // replace this with actual accelerometer data in g
-  // FusionVector magnetometer = { mx, my, mz };   // replace this with actual magnetometer data in arbitrary units
-
-  // Apply calibration
-  gyroscope = FusionCalibrationInertial(gyroscope, gyroscopeMisalignment, gyroscopeSensitivity, gyroscopeOffset);
-  accelerometer = FusionCalibrationInertial(accelerometer, accelerometerMisalignment, accelerometerSensitivity, accelerometerOffset);
-  // magnetometer = FusionCalibrationMagnetic(magnetometer, softIronMatrix, hardIronOffset);
-
-  // Update gyroscope offset correction algorithm
-  gyroscope = FusionOffsetUpdate(&offset, gyroscope);
-
-  // Calculate delta time (in seconds) to account for gyroscope sample clock error
-  static clock_t previousTimestamp;
-  const float deltaTime = (float)(timestamp - previousTimestamp) / (float)CLOCKS_PER_SEC;
-  previousTimestamp = timestamp;
-
-  // Update gyroscope AHRS algorithm
-  FusionAhrsUpdateNoMagnetometer(&ahrs, gyroscope, accelerometer, deltaTime);
-  // FusionAhrsUpdate(&ahrs, gyroscope, accelerometer, magnetometer, deltaTime);
-
-  // Print algorithm outputs
-  const FusionEuler euler = FusionQuaternionToEuler(FusionAhrsGetQuaternion(&ahrs));
-  // const FusionVector earth = FusionAhrsGetEarthAcceleration(&ahrs);
-
-  angle = euler.angle.roll;
-
-  int time = millis();
-  // Accellerometer / Gyroscope message to x-IMU3 software
-  // I,1000000,0.0000,0.0000,0.0000,0.0000,0.0000,1.0000\r\n
-  Serial.print("I,");
-  Serial.print(time);
-  Serial.print("00,");
-  Serial.print(gyroscope.axis.x, 4);
-  Serial.print(",");
-  Serial.print(gyroscope.axis.y, 4);
-  Serial.print(",");
-  Serial.print(gyroscope.axis.z, 4);
-  Serial.print(",");
-  Serial.print(accelerometer.axis.x, 4);
-  Serial.print(",");
-  Serial.print(accelerometer.axis.y, 4);
-  Serial.print(",");
-  Serial.print(accelerometer.axis.z , 4);
-  Serial.print("\r\n");
-
-
-  const FusionQuaternion quaternion = FusionAhrsGetQuaternion(&ahrs);
-  float quatw = quaternion.element.w;
-  float quatx = quaternion.element.x;
-  float quaty = quaternion.element.y;
-  float quatz = quaternion.element.z;
-
-  // Quaternion message to x-IMU3 software
-  // Q,1000000,1.0000,0.0000,0.0000,0.0000\r\n
-  Serial.print("Q,");
-  Serial.print(time);
-  Serial.print("00,");
-  Serial.print(quatw, 4);
-  Serial.print(",");
-  Serial.print(quatx, 4);
-  Serial.print(",");
-  Serial.print(quaty, 4);
-  Serial.print(",");
-  Serial.print(quatz, 4);
-  Serial.print("\r\n");
 }
