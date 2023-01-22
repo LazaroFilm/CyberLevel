@@ -4,20 +4,10 @@
 
 // and xioTechnologies/Fusion https://github.com/xioTechnologies/Fusion
 
-// #define ARDUINO_NANO_RP2040_CONNECT
-// #define ENCODER_USE_INTERRUPTS
-// #define ENCODER_PULLUP
-// #define ENCODER_OPTIMIZE_INTERRUPTS
-// #include <Wire.h>
-// #define INPUT_PULLUP 0x2
 #include <WiFiNINA.h>
 #include <Adafruit_NeoPixel.h>
 #include <EasyButton.h>
-// #include <Encoder.h>
-// #include <NanoBLEFlashPrefs.h>
-//IMU/Fusion
 #include <Adafruit_LSM6DSOX.h>
-// #include <Arduino_LSM9DS1.h>  //Femme's version
 #include <Fusion.h>
 #include "qdec.h"
 
@@ -30,20 +20,14 @@ Adafruit_LSM6DSOX sox;
 
 
 /* === === === === === PINS === === === === ===*/
-#define LED_PIN 6     // D13 GPIO6 NeoPixel strip
-#define BUTTON_PIN 2  // D2 Encodder button
-// #define ENC_PIN1 7    // D8 Encoder pinsx
-// #define ENC_PIN2 9    // D9 Encoder pins
+#define LED_PIN 6            // D13 GPIO6 NeoPixel strip
+#define BUTTON_PIN 2         // D2 Encodder button
 const int ROTARY_PIN_A = 7;  // the first pin connected to the rotary encoder
 const int ROTARY_PIN_B = 9;  // the second pin connected to the rotary encoder
 
 /* === === === === === Encoder === === === === ===*/
-// Encoder knob(ENC_PIN1, ENC_PIN2);
 ::SimpleHacks::QDecoder qdec(ROTARY_PIN_A, ROTARY_PIN_B, false);  // the library class...
-// Stores a relative value based on the clockwise / counterclockwise events
 volatile int rotaryCount = 0;
-// Used in loop() function to track the value of rotaryCount from the
-// prior time that loop() executed (to detect changes in the value)
 int lastLoopDisplayedRotaryCount = 0;
 
 // How many NeoPixels are attached to the Arduino?
@@ -58,10 +42,6 @@ int lastLoopDisplayedRotaryCount = 0;
 #define YELLOW (65536 / 6)        // 10922.6666667
 #define RED (0)                   // 0
 
-// When setting up the NeoPixel library, we tell it how many pixels,
-// and which pin to use to send signals. Note that for older NeoPixel
-// strips you might need to change the third parameter -- see the
-// strandtest example for more information on possible values.
 Adafruit_NeoPixel pixels(NUM_PIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
 
 /* === === === === === VALUES === === === === === */
@@ -158,8 +138,6 @@ void setup() {
 
   // initialize the rotary encoder
   qdec.begin();
-  // attach an interrupts to each pin, firing on any change in the pin state
-  // no more polling for state required!
   attachInterrupt(digitalPinToInterrupt(ROTARY_PIN_A), IsrForQDEC, CHANGE);
   attachInterrupt(digitalPinToInterrupt(ROTARY_PIN_B), IsrForQDEC, CHANGE);
   pinMode(ROTARY_PIN_A, INPUT_PULLUP);
@@ -213,26 +191,9 @@ void setup() {
 === === === === === === === === === === === === === === === === === === === === === === === === === === === === === ===
 */
 void loop() {
-  // Encoder
-  // long newKnob = knob.read();
-  // if (newKnob != oldKnob) {
-  //   oldKnob = newKnob;
-  //   Serial.println("Knob moved!");
-  // }
 
-  newValue = rotaryCount;
-  if (newValue != lastLoopDisplayedRotaryCount) {
-    // Also get the difference since the last loop() execution
-    int difference = newValue - lastLoopDisplayedRotaryCount;
-
-    // act on the change: e.g., modify PWM to be faster/slower, etc.
-    lastLoopDisplayedRotaryCount = newValue;
-    Serial.print("Change: ");
-    Serial.print(newValue);
-    Serial.print(" (");
-    Serial.print(difference);
-    Serial.println(")");
-  }
+  // Encoder checks if it was turned
+  encoderLoop();
 
   // Check button status
   button.read();
@@ -244,9 +205,7 @@ void loop() {
 
   /* === === === === CyberLevel === === === === */
 
-  // Serial.print("Angle: ");
-  // Serial.print(bubbleAngle)
-  loopLED();
+  loopLevel();
 
   /* === === === === Flash === === === === */
 

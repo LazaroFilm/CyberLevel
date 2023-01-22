@@ -1,4 +1,4 @@
-void loopLED() {
+void loopLevel() {
   // angleOffset = (Pot / (1023 / 2) * 10) - 10;  // offset bubble with pot
   angleOffset = newValue * 0.1;  // Enc
   // angleOffset = 0;  //! Disables offset !
