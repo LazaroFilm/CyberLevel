@@ -10,8 +10,6 @@
 // NanoBLEFlashPrefs myFlashPrefs;
 // flashPrefs prefs;
 
-bool unsavedZoom = false;  // Check if any setting needs to be saved to Flash
-
 void setupFlash() {
   // flashPrefs prefsOut;
 
