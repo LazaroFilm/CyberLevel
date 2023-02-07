@@ -9,10 +9,10 @@
 #define XIMU
 // #define SERIAL_STUDIO
 
-// #include <Sheduler.h>
 #include <WiFiNINA.h>
 #include <Adafruit_NeoPixel.h>
 #include <EasyButton.h>
+// #include <Adafruit_LSM6DSOX.h>
 #include <LSM6DSOXSensor.h>
 #include <Fusion.h>
 #include "qdec.h"
@@ -24,7 +24,7 @@ LSM6DSOXSensor lsm6dsoxSensor = LSM6DSOXSensor(&Wire, LSM6DSOX_I2C_ADD_L);
 
 // #define SAMPLE_PERIOD (0.01f)  // replace this with actual sample period
 #define SAMPLE_RATE (416)  // replace this with actual sample rate
-// #define LSM6DSOX_INT1_CTRL = uint8_t int1_drdy_g
+#define LSM6DSOX_INT1_CTRL = uint8_t int1_drdy_g
 
 
 /* === === === === === PINS === === === === ===*/
@@ -59,7 +59,7 @@ const uint8_t centerPixel = (NUM_PIXELS - 1) / 2;  // Center of the LED strip
 
 
 //IMU Fusion
-unsigned long timestamp = micros();  // replace this with actual gyroscope timestamp
+unsigned long timestamp = micros();     // replace this with actual gyroscope timestamp
 
 // IMU data to Fusion
 float ax, ay, az, gx, gy, gz;
@@ -143,18 +143,13 @@ void setup() {
 
   setupEncoder();
 
+  setupIMU();
 
+  setupFusion();
 
   // while (1) {
   //   delay(100);
   // }
-
-  // Scheduler.startLoop(loop1);
-}
-
-void setup1() {
-  setupIMU();
-  setupFusion();
 }
 
 /*
@@ -163,9 +158,7 @@ void setup1() {
 === === === === === === === === === === === === === === === === === === === === === === === === === === === === === ===
 */
 
-// void loop1() {
 
-// }
 void loop() {
 
   // Encoder checks if it was turned

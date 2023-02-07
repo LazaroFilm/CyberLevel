@@ -2,17 +2,22 @@
 
 // Define calibration (replace with actual calibration data)
 const FusionMatrix gyroscopeMisalignment = {
-    1.0f, 0.0f, 0.0f,  //  xx   xy  xz
+    1.0f, 0.0f, 0.02555f,  //  xx   xy  xz
     0.0f, 1.0f, 0.0f,  //  yx   yy  yz
-    // 0.0f, 1.0f, 0.0665711556829035f,  //  yx   yy  yz
     0.0f, 0.0f, 1.0f   //  zx   zy  zz
   };
+
+  /* 
+    result.axis.x = R.xx * vector.axis.x + R.xy * vector.axis.y + R.xz * vector.axis.z;
+    result.axis.y = R.yx * vector.axis.x + R.yy * vector.axis.y + R.yz * vector.axis.z;
+    result.axis.z = R.zx * vector.axis.x + R.zy * vector.axis.y + R.zz * vector.axis.z;
+*/
 
   // 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f
 // };
 
 const FusionVector gyroscopeSensitivity = { 0.001f, 0.001f, 0.001f };
-const FusionVector gyroscopeOffset = { -0.06f, 0.01f, 0.2f };
+const FusionVector gyroscopeOffset = { 0.0f, 0.0f, 0.0f };
 // const FusionVector gyroscopeOffset = FUSION_VECTOR_ZERO;
 const FusionMatrix accelerometerMisalignment = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f };
 const FusionVector accelerometerSensitivity = { 0.001f, 0.001f, 0.001f };
@@ -23,7 +28,7 @@ const FusionMatrix softIronMatrix = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 
 const FusionVector hardIronOffset = FUSION_VECTOR_ZERO;
 
 const FusionAhrsSettings settings = {
-  .gain = 0.025f,
+  .gain = 0.01f,
   .accelerationRejection = 10.0f,
   .magneticRejection = 20.0f,
   .rejectionTimeout = 5 * SAMPLE_RATE, /* 5 seconds */
@@ -43,10 +48,10 @@ void loopFusion() {
   FusionVector accelerometer = { ax, ay, az };  // accelerometer data in g
 
   // Apply calibration
-  gyroscope = FusionCalibrationInertial(FusionAxesSwap(gyroscope, FusionAxesAlignmentPXPYPZ), gyroscopeMisalignment, gyroscopeSensitivity, gyroscopeOffset);  // The default values are saved in the main sketch.
+  gyroscope = FusionCalibrationInertial(FusionAxesSwap(gyroscope, FusionAxesAlignmentNXPYNZ), gyroscopeMisalignment, gyroscopeSensitivity, gyroscopeOffset);  // The default values are saved in the main sketch.
   // gyroscope = FusionCalibrationInertial(FusionAxesSwap(gyroscope, FusionAxesAlignmentNXPYNZ), FUSION_IDENTITY_MATRIX, gyroscopeSensitivity, FUSION_VECTOR_ZERO);  // use forced default as per https://github.com/xioTechnologies/Fusion/issues/58#issuecomment-1377670775
   // accelerometer = FusionCalibrationInertial(FusionAxesSwap(accelerometer, FusionAxesAlignmentNXPYNZ), accelerometerMisalignment, accelerometerSensitivity, accelerometerOffset);
-  accelerometer = FusionCalibrationInertial(FusionAxesSwap(accelerometer, FusionAxesAlignmentPXPYPZ), FUSION_IDENTITY_MATRIX, accelerometerSensitivity, FUSION_VECTOR_ZERO);
+  accelerometer = FusionCalibrationInertial(FusionAxesSwap(accelerometer, FusionAxesAlignmentNXPYNZ), FUSION_IDENTITY_MATRIX, accelerometerSensitivity, FUSION_VECTOR_ZERO);
 
   // Update gyroscope offset correction algorithm
   gyroscope = FusionOffsetUpdate(&offset, gyroscope);
