@@ -19,7 +19,24 @@ void IsrForQDEC(void) {  // do absolute minimum possible in any ISR ...
   return;
 }
 
-void encoderLoop() {
+void setupEncoder() {
+  // initialize the rotary encoder
+  qdec.begin();
+  attachInterrupt(digitalPinToInterrupt(ROTARY_PIN_A), IsrForQDEC, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ROTARY_PIN_B), IsrForQDEC, CHANGE);
+  pinMode(ROTARY_PIN_A, INPUT_PULLUP);
+  pinMode(ROTARY_PIN_B, INPUT_PULLUP);
+
+  /* === === === === Initialize EasyButton === === === === */
+
+  button.begin();
+
+  // EasyButton callbacks
+  button.onSequence(1, 300, resetAngle);
+  button.onPressedFor(300, changeZoom);
+}
+
+void loopEncoder() {
   newValue = rotaryCount;
   if (newValue != lastLoopDisplayedRotaryCount) {
     // Also get the difference since the last loop() execution
@@ -27,10 +44,12 @@ void encoderLoop() {
 
     // act on the change: e.g., modify PWM to be faster/slower, etc.
     lastLoopDisplayedRotaryCount = newValue;
+#ifdef ENABLE_SERIAL
     Serial.print("Change: ");
     Serial.print(newValue);
     Serial.print(" (");
     Serial.print(difference);
     Serial.println(")");
+#endif
   }
 }

@@ -76,6 +76,7 @@ void loopPrint() {
 
   /* Optional: Display sensor status (debug only) */
   // displaySensorStatus();
+  Serial.print("loop time: " + String(loopTime) + "us\t" + String(freq) + "Hz");
 
   Serial.println("");  // new line for next sample
   // Serial.println("Min:-90,Max:90");
@@ -83,25 +84,44 @@ void loopPrint() {
 }
 
 void printXIMU() {
-  // Accellerometer / Gyroscope message to x-IMU3 software
-  // I,1000000,0.0000,0.0000,0.0000,0.0000,0.0000,1.0000\r\n
+  /* Accellerometer / Gyroscope message to x-IMU3 software
+  I,1000000,0.0000,0.0000,0.0000,0.0000,0.0000,1.0000\r\n */
+
   Serial.print("I,");
   Serial.print(fusionTime);
   Serial.print("00,");
-  Serial.print(cax, 4);
-  Serial.print(",");
-  Serial.print(cay, 4);
-  Serial.print(",");
-  Serial.print(caz, 4);
-  Serial.print(",");
   Serial.print(cgx, 4);
   Serial.print(",");
   Serial.print(cgy, 4);
   Serial.print(",");
   Serial.print(cgz, 4);
+  Serial.print(",");
+  Serial.print(cax, 4);
+  Serial.print(",");
+  Serial.print(cay, 4);
+  Serial.print(",");
+  Serial.print(caz, 4);
   Serial.print("\r\n");
-  // Quaternion message to x-IMU3 software
-  // Q,1000000,1.0000,0.0000,0.0000,0.0000\r\n
+
+  // Serial.print("I,");
+  // Serial.print(fusionTime);
+  // Serial.print("00,");
+  // Serial.print(gx, 4);
+  // Serial.print(",");
+  // Serial.print(gy, 4);
+  // Serial.print(",");
+  // Serial.print(gz, 4);
+  // Serial.print(",");
+  // Serial.print(ax, 4);
+  // Serial.print(",");
+  // Serial.print(ay, 4);
+  // Serial.print(",");
+  // Serial.print(az, 4);
+  // Serial.print("\r\n");
+
+  /* Quaternion message to x-IMU3 software
+  Q,1000000,1.0000,0.0000,0.0000,0.0000\r\n */
+
   Serial.print("Q,");
   Serial.print(fusionTime);
   Serial.print("00,");
@@ -113,4 +133,40 @@ void printXIMU() {
   Serial.print(",");
   Serial.print(quatz, 4);
   Serial.print("\r\n");
+}
+
+void printSerialStudio() {
+  /*KAANSATQRO,2051,2,5,26,10,101.26,27,32,1001,21.1619,86.8515,10,4,1.23,9.81,0.23,0,0,0*/
+  Serial.print("/*");
+  Serial.print("CyberLevel,"); // 1
+
+  Serial.print(cgx); //2
+  Serial.print(",");
+  Serial.print(cgy); //3
+  Serial.print(",");
+  Serial.print(cgz); //4
+  Serial.print(",");
+
+  Serial.print(cax); //5
+  Serial.print(",");
+  Serial.print(cay); //6
+  Serial.print(",");
+  Serial.print(caz); //7
+  Serial.print(",");
+
+  Serial.print(yaw);
+  Serial.print(",");
+  Serial.print(pitch);
+  Serial.print(",");
+  Serial.print(roll);
+  // Serial.print(",");
+
+  // Serial.print(quatw);
+  // Serial.print(",");
+  // Serial.print(quatx);
+  // Serial.print(",");
+  // Serial.print(quaty);
+  // Serial.print(",");
+  // Serial.print(quatz);
+  Serial.println("*/");
 }

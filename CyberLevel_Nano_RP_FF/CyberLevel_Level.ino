@@ -1,3 +1,23 @@
+void setupLevel() {
+  /* === === === === Initialize NeoPixel === === === === */
+
+  pixels.begin();
+
+  // Set RGB LED pins
+  pinMode(LEDR, OUTPUT);
+  pinMode(LEDG, OUTPUT);
+  pinMode(LEDB, OUTPUT);
+
+  // Turn RGB LEDs on
+  rgb_led('i');
+
+  // dim white center pixel
+  pixels.clear();
+  pixels.setPixelColor(centerPixel, pixels.Color(10, 10, 10));
+  pixels.setBrightness(255);
+  pixels.show();
+}
+
 void loopLevel() {
   // angleOffset = (Pot / (1023 / 2) * 10) - 10;  // offset bubble with pot
   angleOffset = newValue * 0.1;  // Enc
@@ -94,6 +114,11 @@ void loopLevel() {
     pixels.setPixelColor(centerPixel - 1, rgbcolorS);
     pixels.setPixelColor(centerPixel, rgbcolorC);
     pixels.setPixelColor(centerPixel + 1, rgbcolorS);
+  }
+
+  if (missingGData) {
+    pixels.setPixelColor(0, pixels.Color(255, 0, 0));
+    missingGData = false;
   }
 
   pixels.show();  // displays the pixels

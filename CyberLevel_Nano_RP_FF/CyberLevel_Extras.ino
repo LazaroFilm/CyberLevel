@@ -97,11 +97,12 @@ void plot(String label, float value, bool last) {
 }
 
 void resetAngle() {
-  Serial.println("Resetting angle adjustment - TODO");
-  // knob.readAndReset();
+  Serial.println("Resetting angle adjustment");
+  // Zero out encoder
   rotaryCount = 0;
   newValue = 0;
-  //Add zero out IMU here if possible.
+  //Resetting Fusion
+  FusionAhrsReset(&ahrs);
 }
 
 void rgb_led(char color) {  // RGB led on the Nano 33 BLE board

@@ -1,164 +1,71 @@
 /* === === === === === IMU === === === === === */
-
 void setupIMU() {
-  if (!sox.begin_I2C()) {
-    Serial.println("Failed to find LSM6DSOX chip");
-    while (1) {
-      delay(10);
-    }
+  // // IMU Interrupt
+  // attachInterrupt(INT_1, INT1Event_cb, CHANGE);
+
+  // Init the sensor
+  lsm6dsoxSensor.begin();
+
+  // Enable accelerometer and gyroscope, and check success
+  if (lsm6dsoxSensor.Enable_X() == LSM6DSOX_OK && lsm6dsoxSensor.Enable_G() == LSM6DSOX_OK) {
+    Serial.println("Success enabling accelero and gyro");
+  } else {
+    Serial.println("Error enabling accelero and gyro");
   }
 
-  Serial.println("LSM6DSOX Found!");
-
-  sox.setAccelRange(LSM6DS_ACCEL_RANGE_4_G);
-  Serial.print("Accelerometer range set to: ");
-  switch (sox.getAccelRange()) {
-    case LSM6DS_ACCEL_RANGE_2_G:
-      Serial.println("+-2G");
-      break;
-    case LSM6DS_ACCEL_RANGE_4_G:
-      Serial.println("+-4G");
-      break;
-    case LSM6DS_ACCEL_RANGE_8_G:
-      Serial.println("+-8G");
-      break;
-    case LSM6DS_ACCEL_RANGE_16_G:
-      Serial.println("+-16G");
-      break;
+  // Read ID of device and check that it is correct
+  uint8_t id;
+  lsm6dsoxSensor.ReadID(&id);
+  if (id != LSM6DSOX_ID) {
+    Serial.println("Wrong ID for LSM6DSOX sensor. Check that device is plugged");
+  } else {
+    Serial.println("Receviced correct ID for LSM6DSOX sensor");
   }
 
-  sox.setGyroRange(LSM6DS_GYRO_RANGE_500_DPS);
-  Serial.print("Gyro range set to: ");
-  switch (sox.getGyroRange()) {
-    case LSM6DS_GYRO_RANGE_125_DPS:
-      Serial.println("125 degrees/s");
-      break;
-    case LSM6DS_GYRO_RANGE_250_DPS:
-      Serial.println("250 degrees/s");
-      break;
-    case LSM6DS_GYRO_RANGE_500_DPS:
-      Serial.println("500 degrees/s");
-      break;
-    case LSM6DS_GYRO_RANGE_1000_DPS:
-      Serial.println("1000 degrees/s");
-      break;
-    case LSM6DS_GYRO_RANGE_2000_DPS:
-      Serial.println("2000 degrees/s");
-      break;
-    case ISM330DHCX_GYRO_RANGE_4000_DPS:
-      break;  // unsupported range for the DSOX
-  }
+  // Set accelerometer scale at +- 2G. Available values are +- 2, 4, 8, 16 G
+  lsm6dsoxSensor.Set_X_FS(4);
 
-  sox.setAccelDataRate(LSM6DS_RATE_104_HZ);
-  Serial.print("Accelerometer data rate set to: ");
-  switch (sox.getAccelDataRate()) {
-    case LSM6DS_RATE_SHUTDOWN:
-      Serial.println("0 Hz");
-      break;
-    case LSM6DS_RATE_12_5_HZ:
-      Serial.println("12.5 Hz");
-      break;
-    case LSM6DS_RATE_26_HZ:
-      Serial.println("26 Hz");
-      break;
-    case LSM6DS_RATE_52_HZ:
-      Serial.println("52 Hz");
-      break;
-    case LSM6DS_RATE_104_HZ:
-      Serial.println("104 Hz");
-      break;
-    case LSM6DS_RATE_208_HZ:
-      Serial.println("208 Hz");
-      break;
-    case LSM6DS_RATE_416_HZ:
-      Serial.println("416 Hz");
-      break;
-    case LSM6DS_RATE_833_HZ:
-      Serial.println("833 Hz");
-      break;
-    case LSM6DS_RATE_1_66K_HZ:
-      Serial.println("1.66 KHz");
-      break;
-    case LSM6DS_RATE_3_33K_HZ:
-      Serial.println("3.33 KHz");
-      break;
-    case LSM6DS_RATE_6_66K_HZ:
-      Serial.println("6.66 KHz");
-      break;
-  }
+  // Set gyroscope scale at +- 125 degres per second. Available values are +- 125, 250, 500, 1000, 2000 dps
+  lsm6dsoxSensor.Set_G_FS(1000);
 
-  sox.setGyroDataRate(LSM6DS_RATE_104_HZ);
-  Serial.print("Gyro data rate set to: ");
-  switch (sox.getGyroDataRate()) {
-    case LSM6DS_RATE_SHUTDOWN:
-      Serial.println("0 Hz");
-      break;
-    case LSM6DS_RATE_12_5_HZ:
-      Serial.println("12.5 Hz");
-      break;
-    case LSM6DS_RATE_26_HZ:
-      Serial.println("26 Hz");
-      break;
-    case LSM6DS_RATE_52_HZ:
-      Serial.println("52 Hz");
-      break;
-    case LSM6DS_RATE_104_HZ:
-      Serial.println("104 Hz");
-      break;
-    case LSM6DS_RATE_208_HZ:
-      Serial.println("208 Hz");
-      break;
-    case LSM6DS_RATE_416_HZ:
-      Serial.println("416 Hz");
-      break;
-    case LSM6DS_RATE_833_HZ:
-      Serial.println("833 Hz");
-      break;
-    case LSM6DS_RATE_1_66K_HZ:
-      Serial.println("1.66 KHz");
-      break;
-    case LSM6DS_RATE_3_33K_HZ:
-      Serial.println("3.33 KHz");
-      break;
-    case LSM6DS_RATE_6_66K_HZ:
-      Serial.println("6.66 KHz");
-      break;
-  }
+  // Set Accelerometer sample rate to 208 Hz. Available values are +- 12.0, 26.0, 52.0, 104.0, 208.0, 416.0, 833.0, 1667.0, 3333.0, 6667.0 Hz
+  lsm6dsoxSensor.Set_X_ODR(416.0f);
 
-  // sox.configInt1(drdy_g); // Gyro ready interrupt - can we use it to time gyro datas?
-  // sox.highPassFilter(true, LSM6DS_HPF_ODR_DIV_9); // high pass filter -- removes gravity
-  // LSM6DS_HPF_ODR_DIV_50 = 0,
-  // LSM6DS_HPF_ODR_DIV_100 = 1,
-  // LSM6DS_HPF_ODR_DIV_9 = 2,
-  // LSM6DS_HPF_ODR_DIV_400 = 3,
+  // Set Gyroscope sample rate to 208 Hz. Available values are +- 12.0, 26.0, 52.0, 104.0, 208.0, 416.0, 833.0, 1667.0, 3333.0, 6667.0 Hz
+  lsm6dsoxSensor.Set_G_ODR(416.0f);
+
+  // // Enable Interrupt pin when G data is ready. Hoping to use this to count the acutal frequency to send to Fusion.
+  // lsm6dsoxSensor.Enable_DRDY_G_Int(LSM6DSOX_INT1_PIN);
 }
 
 void loopIMU() {
+  // Read gyroscope
+  uint8_t gyroStatus;
+  lsm6dsoxSensor.Get_G_DRDY_Status(&gyroStatus);
+  if (gyroStatus == 1) {  // Status == 1 means a new data is available
+    int32_t rotation[3];
+    lsm6dsoxSensor.Get_G_Axes(rotation);
 
-  //  /* Get a new normalized sensor event */
-  sensors_event_t accel;
-  sensors_event_t gyro;
-  sensors_event_t temp;
-  sox.getEvent(&accel, &gyro, &temp);
+    gx = rotation[0];
+    gy = rotation[1];
+    gz = rotation[2];
+  } else {
+    missingGData = true;
+    // Serial.print("Gyr fail");
+    // delay(100);
+  }
 
-  // Serial.print("\t\tTemperature ");
-  // Serial.print(temp.temperature);
-  // Serial.println(" deg C");
-
-  // gx = gyro.gyro.x * 57.2957795130931;  // rad/s to deg/s
-  // gy = gyro.gyro.y * 57.2957795130931;  // rad/s to deg/s
-  // gz = gyro.gyro.z * 57.2957795130931;  // rad/s to deg/s
-  gx = -gyro.gyro.x;
-  gy = gyro.gyro.y;
-  gz = -gyro.gyro.z;
-  ax = -accel.acceleration.x;
-  ay = accel.acceleration.y;
-  az = -accel.acceleration.z;
-
-  // plot("ax", ax, false);
-  // plot("ay", ay, false);
-  // plot("az", az, false);
-  // plot("gx", gx, false);
-  // plot("gy", gy, false);
-  // plot("gz", gz, false);
+  // Read accelerometer
+  uint8_t acceleroStatus;
+  lsm6dsoxSensor.Get_X_DRDY_Status(&acceleroStatus);
+  if (acceleroStatus == 1) {  // Status == 1 means a new data is available
+    int32_t acceleration[3];
+    lsm6dsoxSensor.Get_X_Axes(acceleration);
+    ax = acceleration[0];  //-
+    ay = acceleration[1];
+    az = acceleration[2];  //-
+  } else {
+    // Serial.print("Acc fail");
+    // delay(100);
+  }
 }

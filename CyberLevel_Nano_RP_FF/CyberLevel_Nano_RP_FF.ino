@@ -4,19 +4,27 @@
 
 // and xioTechnologies/Fusion https://github.com/xioTechnologies/Fusion
 
+
+#define ENABLE_SERIAL
+#define XIMU
+// #define SERIAL_STUDIO
+
+// #include <Sheduler.h>
 #include <WiFiNINA.h>
 #include <Adafruit_NeoPixel.h>
 #include <EasyButton.h>
-#include <Adafruit_LSM6DSOX.h>
+#include <LSM6DSOXSensor.h>
 #include <Fusion.h>
 #include "qdec.h"
 
 /* === === === === === IMU/Fusion === === === === === */
 // IMU
-Adafruit_LSM6DSOX sox;
+LSM6DSOXSensor lsm6dsoxSensor = LSM6DSOXSensor(&Wire, LSM6DSOX_I2C_ADD_L);
+#define INT_1 4  // Interrupt pin for IMU
 
 // #define SAMPLE_PERIOD (0.01f)  // replace this with actual sample period
-#define SAMPLE_RATE (104)  // replace this with actual sample rate
+#define SAMPLE_RATE (416)  // replace this with actual sample rate
+// #define LSM6DSOX_INT1_CTRL = uint8_t int1_drdy_g
 
 
 /* === === === === === PINS === === === === ===*/
@@ -51,32 +59,23 @@ const uint8_t centerPixel = (NUM_PIXELS - 1) / 2;  // Center of the LED strip
 
 
 //IMU Fusion
-// Define calibration (replace with actual calibration data)
-const FusionMatrix gyroscopeMisalignment = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f };
-const FusionVector gyroscopeSensitivity = { 1.0f, 1.0f, 1.0f };
-const FusionVector gyroscopeOffset = { 0.000020f, 0.000153f, -0.000067f };
-// const FusionVector gyroscopeOffset = FUSION_VECTOR_ZERO;
-const FusionMatrix accelerometerMisalignment = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f };
-const FusionVector accelerometerSensitivity = { 0.1f, 0.1f, 0.1f };
-const FusionVector accelerometerOffset = { -0.009338f, 0.003083f, -0.006804f };
-// const FusionVector accelerometerOffset = FUSION_VECTOR_ZERO;
-const FusionMatrix softIronMatrix = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f };
-const FusionVector hardIronOffset = { 0.0f, 0.0f, 0.0f };
-
-const FusionAhrsSettings settings = {
-  .gain = 0.1f,
-  .accelerationRejection = 10.0f,
-  .magneticRejection = 20.0f,
-  .rejectionTimeout = 5 * SAMPLE_RATE, /* 5 seconds */
-};
+unsigned long timestamp = micros();  // replace this with actual gyroscope timestamp
 
 // IMU data to Fusion
 float ax, ay, az, gx, gy, gz;
 float cax, cay, caz, cgx, cgy, cgz;
 float quatw, quatx, quaty, quatz;
+float yaw, pitch, roll;
 int fusionTime;
 
+unsigned long lastEventTime, eventTime = micros();  // interruptCounter = 1;
+long count = 0;
+unsigned long loopTime;
+float freq;
+bool missingGData = false;
+
 // CyberLevel
+bool splash = true;  // is it displaying plash?
 double angle;        // Roll angle in degree
 double decimalOnly;  // only the decimal of the pixel number
 double floatPixel;   // Pixel numer
@@ -125,7 +124,8 @@ FusionAhrs ahrs;
 */
 void setup() {
 
-  //  Start Serial and wait for connection
+#ifdef ENABLE_SERIAL
+  //Start Serial and wait for connection
   Serial.begin(115200, SERIAL_8N1);
   delay(100);
   if (!Serial) {
@@ -133,56 +133,28 @@ void setup() {
     delay(1000);
   }
   Serial.println(" === === === Seial started === === === ");
+#endif
+
+  // Default clock is 100kHz. LSM6DSOX also supports 400kHz, let's use it
+  Wire.begin();
+  Wire.setClock(400000);
 
   // setupFlash();  // Reads the prefs stored in the flash and loads them.
 
-  // initialize the rotary encoder
-  qdec.begin();
-  attachInterrupt(digitalPinToInterrupt(ROTARY_PIN_A), IsrForQDEC, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(ROTARY_PIN_B), IsrForQDEC, CHANGE);
-  pinMode(ROTARY_PIN_A, INPUT_PULLUP);
-  pinMode(ROTARY_PIN_B, INPUT_PULLUP);
+  setupEncoder();
 
-  /* === === === === Initialize EasyButton === === === === */
 
-  button.begin();
-
-  // EasyButton callbacks
-  button.onSequence(1, 300, resetAngle);
-  button.onPressedFor(300, changeZoom);
-
-  /* === === === === Initialize IMU === === === === */
-
-  setupIMU();
-
-  FusionOffsetInitialise(&offset, SAMPLE_RATE);
-  FusionAhrsInitialise(&ahrs);
-
-  setupFusion();
-
-  // Set AHRS algorithm settings
-  FusionAhrsSetSettings(&ahrs, &settings);
-
-  /* === === === === Initialize NeoPixel === === === === */
-
-  pixels.begin();
-
-  // Set RGB LED pins
-  pinMode(LEDR, OUTPUT);
-  pinMode(LEDG, OUTPUT);
-  pinMode(LEDB, OUTPUT);
-
-  // Turn RGB LEDs on
-  rgb_led('i');
-
-  // dim white center pixel
-  pixels.clear();
-  pixels.setPixelColor(centerPixel, pixels.Color(10, 10, 10));
-  pixels.show();
 
   // while (1) {
   //   delay(100);
   // }
+
+  // Scheduler.startLoop(loop1);
+}
+
+void setup1() {
+  setupIMU();
+  setupFusion();
 }
 
 /*
@@ -190,10 +162,14 @@ void setup() {
 === === === === === === === === === === === === L O O P === === === === === === === === === === === === === === === ===
 === === === === === === === === === === === === === === === === === === === === === === === === === === === === === ===
 */
+
+// void loop1() {
+
+// }
 void loop() {
 
   // Encoder checks if it was turned
-  encoderLoop();
+  loopEncoder();
 
   // Check button status
   button.read();
@@ -204,13 +180,29 @@ void loop() {
   loopFusion();
 
   /* === === === === CyberLevel === === === === */
-
-  loopLevel();
+  if (false) {
+    rainbowCycle();
+  } else {
+    pixels.setBrightness(255);
+    loopLevel();
+  }
+  // Serial.print(" boop ");
 
   /* === === === === Flash === === === === */
 
   // loopFlash();  // checks for updated prefs and saves them to the flash
 
-  // loopPrint();
-  // printXIMU();
+#ifdef ENABLE_SERIAL
+// loopPrint();
+#ifdef XIMU
+  printXIMU();
+#endif
+#ifdef SERIAL_STUDIO
+  printSerialStudio();
+#endif
+#endif
+  eventTime = micros();
+  loopTime = eventTime - lastEventTime;
+  lastEventTime = eventTime;
+  freq = 1000000.0f / loopTime;
 }
