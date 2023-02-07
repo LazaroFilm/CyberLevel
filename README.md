@@ -2,6 +2,8 @@
 *A gyro balanced digital level for Steadicam.*
 ---
 
+![CyberLevel prototypes](https://raw.githubusercontent.com/LazaroFilm/CyberLevel/main/public/img/CyberLevel%20.jpg "CyberLevel")
+
 Using a microcontroller and a IMU with at least an accelerometer and a gyroscope fused together to control a strip of addressable RGB LEDs.
 The CyberLevel shows a virtual spirit level to give a simple and fast fisual feedback of the yaw (horizon) of the camera. With the benefit of being gyro stabilized, it isn't impacted by acceleration forces from the accelerometer. 
 
