@@ -59,7 +59,7 @@ This menu displays information about your Cyberlevel, such as Serial number and 
 
 ![menu file](https://github.com/LazaroFilm/CyberLevel_releases/assets/18351100/884600d8-76b0-4e61-89da-3c5eb88c02de)
 
-# 5 - To update:
+## 5 - Updating the firmware:
 The latest firmware update is available at: https://github.com/LazaroFilm/CyberLevel_releases/releases/latest
 - Download the latest firmware file `CyberLevel_x.x.x_firmware.uf2` to your computer.
 - Connect your CyberLevel to your computer via USB-C (make sure it is not connectoed to another power source via the 2 pin Lemo!)
