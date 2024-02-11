@@ -38,7 +38,7 @@ Slide the two sliders to change the brightness of the LCD screen and LED bar.
 
 ### <img src="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/gear.svg" width="20" height="20"> Settings
 Here you can change the following settings:
-- **Sensit.**: The value indicates the range the level will display on each sides. For instance, `[ 10 ]` will display tilt between -10° and +10° on the LCD screen and the 30 LEDs of the bar.
+- **sensit.**: The value indicates the range the level will display on each sides. For instance, `[ 10 ]` will display tilt between -10° and +10° on the LCD screen and the 30 LEDs of the bar.
 - **Larry**: This speacial feature shows the lateral linear acceleration with blue lights on the LED bar. This is useful to detect the side stepping of the camera when moving forward. Note: You will need to power cycle your CyberLevel after enabling it.
 - **flip**: These two switches will flip the direction of the bubble on your LCD screen and LED bar. This is useful to mount them upside down for instance.
 
