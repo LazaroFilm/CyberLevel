@@ -39,14 +39,13 @@ Slide the two sliders to change the brightness of the LCD screen and LED bar.
 ### <img src="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/gear.svg" width="20" height="20"> Settings
 Here you can change the following settings:
 - **sensit.**: The value indicates the range the level will display on each sides. For instance, `[ 10 ]` will display tilt between -10° and +10° on the LCD screen and the 30 LEDs of the bar.
-- **Larry**: This speacial feature shows the lateral linear acceleration with blue lights on the LED bar. This is useful to detect the side stepping of the camera when moving forward. Note: You will need to power cycle your CyberLevel after enabling it.
 - **flip**: These two switches will flip the direction of the bubble on your LCD screen and LED bar. This is useful to mount them upside down for instance.
 
-![menu settings](https://github.com/LazaroFilm/CyberLevel_releases/assets/18351100/35437039-a192-4239-980a-725e0cbc681b)
+![menu_settings](https://github.com/LazaroFilm/CyberLevel/assets/18351100/043f49d1-0df1-44c7-b6e4-b0b2e3a714be)
 
 ### <img src="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/battery-half.svg" width="20" height="20"> Battery
 
-- **batt**: Displays your current power source voltage. The same reading is displayed on the Home screen.
+- **batt**: Displays your current power source voltage. The same reading is displayed on the Home screen. This reading changes with the offset value.
 - **warning**: Use the slider to select your low battery warning level. The warning wil show yellow LEDs 0.3v before your warning then blink red when below. A quick tap on the slider resets to 12v warning level.
 - **offset**: Due to voltage drop, your CyberLevel may display a different voltage than your camera's voltage reading. You can offset the CyberLevel's reading to match the camera's. Use the slider so the batt reading from above matches your camera. A quick tap on the slider resets to 0.
 
