@@ -91,7 +91,7 @@ https://github.com/LazaroFilm/CyberLevel/releases/latest
 |    1 | GND        |
 |    2 | 5v         |
 |    3 | LED Signal |
-|      |            |
+
 
 - **Power 2 pin Lemo: 0B.302**
 
@@ -99,7 +99,7 @@ https://github.com/LazaroFilm/CyberLevel/releases/latest
 | ---: | -------------- |
 |    1 | GND            |
 |    2 | V+ (5v to 18v) |
-|      |                |
+
 
 
 ## 7. CONTACT
