@@ -17,7 +17,7 @@ If the splash screen doesn’t appear after a few seconds, try power cycling the
 The LED strip can be attached on the bezel of your monitor with a 1/2 inch wide velcro strip.
 ![Screenshot 2024-03-11 at 10 16 31 AM](https://github.com/LazaroFilm/CyberLevel/assets/18351100/e3fcec75-c91b-4217-bcee-7851ae1e7227)
 
-The LED strip has 30 RGB pixels. The center pixel is always purple. The two pixel level indicator will travel across the strip according to your tilt.
+The LED strip has 30 RGB pixels. The center pixel is always blue. The two pixel level indicator will travel across the strip according to your tilt.
 ![Screenshot 2024-03-11 at 10 17 08 AM](https://github.com/LazaroFilm/CyberLevel/assets/18351100/d1878251-eaf2-45f5-bcc3-ebe423ab7fc9)
 The first and last pixels on the strip will turn yellow then red when the battery warning is triggered. You can set your battery warning threshold in the menu. 
 
