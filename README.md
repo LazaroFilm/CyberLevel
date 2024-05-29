@@ -50,6 +50,7 @@ Slide the two sliders to change the brightness of the LCD screen and LED strip.
 
 ### <img src="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/gear.svg" width="20" height="20"> Settings
 - **sensit.**: The value indicates the angle range the level will display. For instance, [ 10 ] will display tilt between -10° and +10° on the LCD screen and the 30 LEDs of the strip.
+- **orient.**: chose the cardinal orientation of the LCD screen. Changes are applied when you exit the menu. 
 - **flip**: These two switches will flip the direction of the bubble on your LCD screen and LED strip.
 
 ![menu_settings](https://github.com/LazaroFilm/CyberLevel/assets/18351100/043f49d1-0df1-44c7-b6e4-b0b2e3a714be)
